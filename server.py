@@ -4,6 +4,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
 
+def has_unpaired_surrogates(s):
+    # Returns True if s contains any unpaired surrogate code points
+    # Surrogates: U+D800 to U+DFFF
+    # Valid surrogate pairs are not possible in Python str, so any surrogate is unpaired
+    for c in s:
+        code = ord(c)
+        if 0xD800 <= code <= 0xDFFF:
+            return True
+    return False
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, value):
         body = json.dumps(value, ensure_ascii=False).encode('utf-8')
@@ -64,6 +74,15 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(include_word_frequencies, bool):
                 self.send_json(400, {'error': 'include_word_frequencies must be boolean'})
                 return
+        include_utf8_bytes = data.get('include_utf8_bytes', False)
+        if 'include_utf8_bytes' in data:
+            if not isinstance(include_utf8_bytes, bool):
+                self.send_json(400, {'error': 'include_utf8_bytes must be boolean'})
+                return
+        if include_utf8_bytes:
+            if has_unpaired_surrogates(text_value):
+                self.send_json(400, {'error': 'text contains unpaired surrogate'})
+                return
         result = {
             'characters': len(text_value),
             'words': len(text_value.split()),
@@ -76,6 +95,13 @@ class Handler(BaseHTTPRequestHandler):
                 if token:
                     freq[token] = freq.get(token, 0) + 1
             result['word_frequencies'] = freq
+        if include_utf8_bytes:
+            try:
+                utf8_bytes = len(text_value.encode('utf-8'))
+            except Exception:
+                self.send_json(400, {'error': 'failed to encode text as utf-8'})
+                return
+            result['utf8_bytes'] = utf8_bytes
         self.send_json(200, result)
 
     def do_PUT(self):

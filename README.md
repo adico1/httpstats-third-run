@@ -24,8 +24,9 @@ the first output line is `PORT=<actual-port>`. Stop the service with Ctrl-C.
 
 - `GET /health` returns 200 and `{"status":"ok"}`.
 - `POST /analyze` accepts a UTF-8 JSON object with a required string `text`.
-  Extra fields are ignored except for the optional boolean `include_word_frequencies`.
+  Extra fields are ignored except for the optional boolean `include_word_frequencies` and `include_utf8_bytes`.
   If `include_word_frequencies` is true, the response includes a `word_frequencies` object mapping each token (from Python `str.split()`) to its occurrence count. Counting is case-sensitive and preserves punctuation and Unicode. Empty or whitespace-only text yields an empty object. Non-boolean values for the flag (including null, numbers, strings, arrays, objects) are rejected with HTTP 400 and a nonempty JSON error string.
+  If `include_utf8_bytes` is true, the response includes a `utf8_bytes` field equal to the UTF-8 byte length of the input text (using Python `len(text.encode('utf-8'))`). Non-boolean values for the flag (including null, numbers, strings, arrays, objects) are rejected with HTTP 400 and a nonempty JSON error string. If the text contains an unpaired surrogate and the flag is true, the server responds with HTTP 400 and a nonempty JSON error instead of crashing. Empty text returns `utf8_bytes` as 0.
   Counts use Python `len(text)`, `len(text.split())`, and `len(text.splitlines())`; empty text produces three zero counts.
 - Empty, malformed or invalid UTF-8 bodies, non-object JSON, missing text and
   non-string text return 400 with a nonempty JSON `error`.
@@ -44,6 +45,30 @@ Expected response:
 {"characters": 12, "words": 3, "lines": 1, "word_frequencies": {"red": 2, "blue": 1}}
 ```
 
+### Example: Opt-in UTF-8 byte count
+
+```sh
+curl http://127.0.0.1:8000/analyze -H 'Content-Type: application/json' -d '{"text":"hé", "include_utf8_bytes": true}'
+```
+
+Expected response:
+
+```json
+{"characters": 2, "words": 1, "lines": 1, "utf8_bytes": 3}
+```
+
+### Example: Both opt-in flags
+
+```sh
+curl http://127.0.0.1:8000/analyze -H 'Content-Type: application/json' -d '{"text":"hé hé", "include_word_frequencies": true, "include_utf8_bytes": true}'
+```
+
+Expected response:
+
+```json
+{"characters": 5, "words": 2, "lines": 1, "word_frequencies": {"hé": 2}, "utf8_bytes": 7}
+```
+
 This is a local experiment, not a production-hardened server. Normal Content-Length
 framing is supported. Request limits, adversarial framing, concurrency, authentication,
 TLS and cloud hosting were outside the trial scope.
@@ -54,8 +79,8 @@ TLS and cloud hosting were outside the trial scope.
 python3 -m unittest discover -s tests -v
 ```
 
-One test method executes 63 independent real HTTP scenarios: the 44 previously
-delivered scenarios plus 19 word-frequency checks. It starts a temporary loopback process and stops it afterward.
+One test method executes 89 independent real HTTP scenarios: the 63 previously
+delivered scenarios plus 26 UTF-8 byte-count checks. It starts a temporary loopback process and stops it afterward.
 The checker is copied unchanged from the factory's independent acceptance suite,
 so the repository can be tested without the factory or model credentials.
 
@@ -86,3 +111,18 @@ independent checks and updated provenance. The earlier trial above describes
 the original analyze feature; `provenance.json` records the current source.
 
 [Word-frequency trial report](https://github.com/adico1/ai_pipeline/blob/main/reports/httpstats-word-frequencies-20261028.json).
+
+### Ongoing-development feature: UTF-8 byte count
+
+CrewAI implemented the opt-in UTF-8 byte count in run `47dcad718a5c`, starting
+from published word-frequency commit `2da1271`. All 11 lifecycle stages completed;
+89/89 HTTP scenarios passed against the candidate and installed copy.
+
+This was an assisted success: the earlier run `42ffe90fe4c4` was withheld for
+missing documentation. The second run required two operator-directed CrewAI
+README correction attempts; the first made no changes, and the second corrected
+an example and removed premature success claims. Verification and review were
+rerun after those edits. Codex did not rewrite the candidate implementation;
+promotion copied the exact verified server.py and packaged the regression checks.
+
+[UTF-8 trial evidence](https://github.com/adico1/ai_pipeline/blob/main/reports/httpstats-utf8-bytes-20261028.json).
