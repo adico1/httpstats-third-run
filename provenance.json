@@ -1,0 +1,12 @@
+{
+  "source_run": "dfd4d8e1e18d",
+  "source_sha256": "dfe956e4f489c7007cdfc7bbfaee6da563884450bef2cdb5eb390d795967601f",
+  "baseline_commit": "9fa3c5848a526a5db894393f7ea239f16237893a",
+  "factory_commit": "8eadee8a727bb47fb198cde9e3ae8a6617ef0239",
+  "source_copied_unchanged": true,
+  "independent_http_scenarios": 44,
+  "baseline_scenarios_included": 3,
+  "manual_candidate_edits": 0,
+  "operator_retries": 0,
+  "report_url": "https://github.com/adico1/ai_pipeline/blob/df2c3d51690eb08adbec348e90f0bba3779e1bc1/reports/httpstats-trial-20261028.json"
+}
