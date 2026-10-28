@@ -1,12 +1,25 @@
 {
-  "source_run": "dfd4d8e1e18d",
-  "source_sha256": "dfe956e4f489c7007cdfc7bbfaee6da563884450bef2cdb5eb390d795967601f",
-  "baseline_commit": "9fa3c5848a526a5db894393f7ea239f16237893a",
-  "factory_commit": "8eadee8a727bb47fb198cde9e3ae8a6617ef0239",
+  "source_run": "d6a512cbd7e3",
+  "source_sha256": "522701c67a0cab5633679d4bfd0727ddb8a50c4bc42c68e9c9155b186a85adea",
+  "baseline_commit": "a299ec9bbef4c0fff8bc45121a8232dcc8d31834",
+  "factory_commit": "6a9bc7967c762e6459d76bbd2735dfc1aedd8a40",
   "source_copied_unchanged": true,
-  "independent_http_scenarios": 44,
-  "baseline_scenarios_included": 3,
+  "independent_http_scenarios": 63,
+  "baseline_scenarios_included": 44,
   "manual_candidate_edits": 0,
   "operator_retries": 0,
-  "report_url": "https://github.com/adico1/ai_pipeline/blob/df2c3d51690eb08adbec348e90f0bba3779e1bc1/reports/httpstats-trial-20261028.json"
+  "engine_repairs": 0,
+  "previous_feature": {
+    "source_run": "dfd4d8e1e18d",
+    "source_sha256": "dfe956e4f489c7007cdfc7bbfaee6da563884450bef2cdb5eb390d795967601f",
+    "baseline_commit": "9fa3c5848a526a5db894393f7ea239f16237893a",
+    "factory_commit": "8eadee8a727bb47fb198cde9e3ae8a6617ef0239",
+    "source_copied_unchanged": true,
+    "independent_http_scenarios": 44,
+    "baseline_scenarios_included": 3,
+    "manual_candidate_edits": 0,
+    "operator_retries": 0,
+    "report_url": "https://github.com/adico1/ai_pipeline/blob/df2c3d51690eb08adbec348e90f0bba3779e1bc1/reports/httpstats-trial-20261028.json"
+  },
+  "report_url": "https://github.com/adico1/ai_pipeline/blob/main/reports/httpstats-word-frequencies-20261028.json"
 }

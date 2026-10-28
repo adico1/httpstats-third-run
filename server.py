@@ -59,11 +59,23 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(400, {'error': 'text must be string'})
             return
         text_value = data['text']
+        include_word_frequencies = data.get('include_word_frequencies', False)
+        if 'include_word_frequencies' in data:
+            if not isinstance(include_word_frequencies, bool):
+                self.send_json(400, {'error': 'include_word_frequencies must be boolean'})
+                return
         result = {
             'characters': len(text_value),
             'words': len(text_value.split()),
             'lines': len(text_value.splitlines()),
         }
+        if include_word_frequencies:
+            tokens = text_value.split()
+            freq = {}
+            for token in tokens:
+                if token:
+                    freq[token] = freq.get(token, 0) + 1
+            result['word_frequencies'] = freq
         self.send_json(200, result)
 
     def do_PUT(self):
