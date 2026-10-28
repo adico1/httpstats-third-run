@@ -6,7 +6,7 @@ team. No package installation or API keys are needed to run it.
 ## Run
 
 ```sh
-python3 server.py --port 8000
+python3 server.py --port 8000 --database httpstats.sqlite3
 ```
 
 In another terminal:
@@ -73,14 +73,48 @@ This is a local experiment, not a production-hardened server. Normal Content-Len
 framing is supported. Request limits, adversarial framing, concurrency, authentication,
 TLS and cloud hosting were outside the trial scope.
 
+## Saved Analysis History
+
+The service supports persistent analysis history using SQLite. Use the `--database PATH` option (default: `httpstats.sqlite3`). Each database path is isolated. The schema is initialized on startup and records survive restarts.
+
+### Save an analysis
+
+```sh
+curl -i http://127.0.0.1:8000/analyses -H 'Content-Type: application/json' -d '{"text":"hé hé","include_utf8_bytes":true,"include_word_frequencies":true}'
+```
+
+Returns HTTP 201 and a JSON object with `id`, `text`, and `analysis` fields. Example response on a fresh database:
+
+```json
+{"id":1,"text":"hé hé","analysis":{"characters":5,"words":2,"lines":1,"word_frequencies":{"hé":2},"utf8_bytes":7}}
+```
+
+### Retrieve a saved analysis
+
+```sh
+curl -i http://127.0.0.1:8000/analyses/1
+```
+
+Returns HTTP 200 and the saved object:
+
+```json
+{"id":1,"text":"hé hé","analysis":{"characters":5,"words":2,"lines":1,"word_frequencies":{"hé":2},"utf8_bytes":7}}
+```
+
+### Restart instructions
+
+Stop the server with Ctrl-C. Restart with the same `--database` path to preserve history. Using a different path creates a new, empty database.
+
 ## Tests
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
 
-One test method executes 89 independent real HTTP scenarios: the 63 previously
-delivered scenarios plus 26 UTF-8 byte-count checks. It starts a temporary loopback process and stops it afterward.
+One test method executes 122 independent checks: 89 existing regression scenarios,
+30 history/API checks, and 3 documentation checks. It starts temporary loopback
+processes, checks SQLite records across restarts, and cleans up test databases.
+The README save/retrieve examples below are executed against a fresh database.
 The checker is copied unchanged from the factory's independent acceptance suite,
 so the repository can be tested without the factory or model credentials.
 
@@ -94,8 +128,8 @@ three approval gates under user authorization.
 
 Promotion copied the exact verified `server.py` bytes; Codex added documentation
 and regression-test packaging without rewriting the generated implementation.
-The original source header still describes the starting baseline and is preserved
-to retain byte-for-byte provenance. See `provenance.json` for the SHA-256 digest.
+That original promotion preserved the baseline source header. Later features
+have evolved the source; each promotion records its own byte-for-byte provenance. See `provenance.json` for the SHA-256 digest.
 
 [Factory trial report](https://github.com/adico1/ai_pipeline/blob/df2c3d51690eb08adbec348e90f0bba3779e1bc1/reports/httpstats-trial-20261028.json).
 This one success does not establish reliability across arbitrary projects.
@@ -126,3 +160,40 @@ rerun after those edits. Codex did not rewrite the candidate implementation;
 promotion copied the exact verified server.py and packaged the regression checks.
 
 [UTF-8 trial evidence](https://github.com/adico1/ai_pipeline/blob/main/reports/httpstats-utf8-bytes-20261028.json).
+
+```json history-examples
+[
+  {
+    "method": "POST",
+    "path": "/analyses",
+    "status": 201,
+    "json": {"text": "hé hé", "include_utf8_bytes": true, "include_word_frequencies": true},
+    "response": {"id": 1, "text": "hé hé", "analysis": {"characters": 5, "words": 2, "lines": 1, "word_frequencies": {"hé": 2}, "utf8_bytes": 7}}
+  },
+  {
+    "method": "GET",
+    "path": "/analyses/1",
+    "status": 200,
+    "response": {"id": 1, "text": "hé hé", "analysis": {"characters": 5, "words": 2, "lines": 1, "word_frequencies": {"hé": 2}, "utf8_bytes": 7}}
+  }
+]
+```
+
+
+### Ongoing-development feature: saved analysis history
+
+CrewAI implemented SQLite-backed save/retrieve history in run `e20e5202da3a`,
+starting from published commit `f0120f3`. All 11 lifecycle stages completed and
+122/122 checks passed on both candidate and installed source, preserving the 89
+existing scenarios. The initial implementation attempt made no edits and failed.
+Two operator-directed CrewAI recovery calls followed: the first implemented the
+feature but failed oversized-ID handling; the second repaired it. One factory
+retry then passed normal verification and review. This was an assisted success.
+
+Codex supplied the acceptance sensors, reviewed three gates, and promoted the
+exact verified server.py. Packaging adds the expanded regression suite, corrects
+the README test count, and extends database sidecar exclusions. No candidate
+implementation was manually rewritten. SQLite data stays local and is excluded
+from source control and the source-only release archive.
+
+[Saved-history trial evidence](https://github.com/adico1/ai_pipeline/blob/main/reports/httpstats-history-20261028.json).
